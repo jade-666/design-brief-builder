@@ -11,4 +11,5 @@
 DBB_Skill_Claude_Code_需求文档.md
 
 # Local Chinese README backup (English README.md is the published version)
-README.zh-CN.md
+# Kept outside the README* namespace so npm does not force-include it.
+docs/zh-CN.md
