@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Build artifact (regenerated via zip; tracked source lives in design-brief-builder/)
+*.skill
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json
+
+# Internal dev docs (local use only)
+DBB_Skill_Claude_Code_需求文档.md
+
+# Local Chinese README backup (English README.md is the published version)
+README.zh-CN.md

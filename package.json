@@ -1,0 +1,33 @@
+{
+  "name": "design-brief-builder",
+  "version": "1.0.0",
+  "description": "A pre-execution governance layer for AI-assisted design. Turns design requests into structured constraint files before Claude Code, Cursor, or Codex starts working.",
+  "bin": {
+    "design-brief-builder": "bin/install.js"
+  },
+  "files": [
+    "bin/",
+    "design-brief-builder/"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "design",
+    "claude-code",
+    "cursor",
+    "codex",
+    "skill",
+    "design-brief",
+    "spec-driven"
+  ],
+  "license": "MIT",
+  "author": "Marker Utron Studio",
+  "homepage": "https://github.com/jade-666/design-brief-builder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jade-666/design-brief-builder.git"
+  },
+  "engines": {
+    "node": ">=16.7.0"
+  }
+}
