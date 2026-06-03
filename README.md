@@ -3,6 +3,7 @@
 > A pre-execution governance layer for AI-assisted design.
 > Turns design requests into structured constraint files before Claude Code, Cursor, or Codex starts working.
 
+[![npm version](https://img.shields.io/npm/v/design-brief-builder?style=flat-square&color=cb3837)](https://www.npmjs.com/package/design-brief-builder)
 ![Benchmark](https://img.shields.io/badge/Benchmark-8_scenarios_·_3_agents-6B7280?style=flat-square)
 ![Score](https://img.shields.io/badge/Score-8–9_per_case-5db8a6?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Claude_Code_·_Cursor_·_Codex-black?style=flat-square)
