@@ -1,7 +1,7 @@
 # Design Brief Builder
 
 > A pre-execution governance layer for AI-assisted design.
-> Turns design requests into structured constraint files before Claude Code, Cursor, or Codex starts working.
+> Turns design requests into structured constraint files before an AI agent — Claude Code, Cursor, Codex, and beyond — starts working.
 
 [![npm version](https://img.shields.io/npm/v/design-brief-builder?style=flat-square&color=cb3837)](https://www.npmjs.com/package/design-brief-builder)
 ![Benchmark](https://img.shields.io/badge/Benchmark-8_scenarios_·_3_agents-6B7280?style=flat-square)
