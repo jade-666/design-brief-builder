@@ -1,526 +1,525 @@
-# Design Brief Builder — 测试用例集 v2
+# Design Brief Builder — Test Case Set v2
 Marker Utron Studio · 2026-06-01
 
 ---
 
-## 文档说明
+## About this document
 
-本文档包含 8 个标准测试用例，覆盖 Brief Builder 在实际场景中面临的核心边界问题。
-每个用例包含：背景设定、输入文本（可直接复制）、评分标准、预期陷阱。
+This document contains 8 standard test cases covering the core boundary problems Brief Builder faces in real scenarios. Each case includes: background setup, input text (copy-paste ready), scoring criteria, and expected traps.
 
-测试方法：将「Brief Builder 提示词」+ 「用例输入文本」拼接后，投入目标 Agent 环境。
-
----
-
-## 用例总览
-
-| # | 场景 | 核心考察 | 对应真实痛点 |
-|---|------|---------|-------------|
-| TC-A | 极简输入 | 追问克制性 | Agent 问题爆炸 / 问废话 |
-| TC-B | 材料冲突 | 冲突识别 | 设计系统被无视 / 矛盾吸收 |
-| TC-C | 目标缺失 | 目标层追问精准度 | 输出千人一面、无品牌感 |
-| TC-D | 约束冲突 | 强制优先级裁决 | Agent 把矛盾包进 Brief |
-| TC-E | B端复杂系统 | B端特有约束识别 | 状态页系统性缺失 |
-| TC-F | 增量迭代 | 边界界定 | 多轮漂移 / 改坏已有页面 |
-| TC-G | DBB × DESIGN.md | 执行文件正确引用外部设计规范 | Token 重复写入 / 规范文件被忽略 |
-| TC-H | 中途改需求 | Brief 锁定后的变更处理 | Brief 确认后需求变更导致执行混乱 |
+Test method: concatenate the "Brief Builder prompt" + the "case input text" and feed them into the target agent environment.
 
 ---
 
-## TC-A · 极简输入
+## Case overview
 
-### 场景背景
-
-考察：当用户只给一句话、没有任何附件时，Brief Builder 的追问机制是否能克制在 5 问以内，且每问都真正关键——而不是用废话把用户淹没。
-
-这是追问克制性的压力测试，也是 Step 1 诊断质量的上限测试。
-
-### 测试输入（直接复制）
-
-```
-帮我做一个后台管理系统。
-```
-
-（无附件，无 Figma 链接，无任何背景资料。）
-
-### 评分标准
-
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 六维度没有区分 KNOWN/VAGUE/MISSING | 区分了但明显判断错误 | 基本准确，1-2 项有偏差 | 六维度判断均准确 |
-| 追问克制性 | 提问 >5 个 | 提问 ≤5 但包含废话（如：「你用什么颜色？」） | ≤5 问，问题有意义，顺序合理 | ≤5 问，问题精准，每问都能显著缩小不确定性 |
-| Brief 可用性 | Brief 无法使用，充满猜测 | Brief 有结构但关键信息仍缺失 | Brief 基本可用，少量补充即可 | Brief 直接可交付给 Agent 执行 |
-
-### 预期陷阱
-
-- **过度追问**：连续抛出 8-10 个问题，用户体验崩溃
-- **问废话**：「您希望主题是深色还是浅色？」「用什么字体？」这类在没有目标层信息之前毫无意义的问题
-- **跳过诊断直接生成 Brief**：信息为零的情况下不追问，直接输出一个充满假设的 Brief
-
-### 通过标准
-
-- 提问数量 ≤ 5
-- 没有颜色/字体类的视觉问题（在目标、受众、核心流程都不明确之前，这些是次要的）
-- 第一个问题必须是关于「这个系统核心要解决什么业务问题 / 给谁用」
+| # | Scenario | Core focus | Real-world pain point |
+|---|----------|------------|----------------------|
+| TC-A | Minimal input | Question restraint | Agent question explosion / filler questions |
+| TC-B | Conflicting inputs | Conflict detection | Design system ignored / conflicts absorbed |
+| TC-C | Missing goal | Goal-layer questioning precision | Generic, brand-less output |
+| TC-D | Conflicting constraints | Forced priority ruling | Agent packs conflicts into the Brief |
+| TC-E | Complex B2B system | B2B-specific constraint detection | Systematic omission of state pages |
+| TC-F | Incremental iteration | Boundary definition | Multi-round drift / breaking existing pages |
+| TC-G | DBB × DESIGN.md | Execution files correctly reference an external design spec | Tokens re-written / spec file ignored |
+| TC-H | Mid-flight requirement change | Change handling after the Brief is locked | Requirement change after Brief confirmation causes execution chaos |
 
 ---
 
-## TC-B · 材料冲突
+## TC-A · Minimal input
 
-### 场景背景
+### Background
 
-考察：当用户提供大量材料但材料之间有矛盾时，Brief Builder 能否识别冲突，而不是盲目把所有输入吸收进 Brief——最终把矛盾留给 Agent 自己裁决。
+Focus: when the user gives only one sentence and no attachments, can Brief Builder's questioning mechanism stay within 5 questions, with every question genuinely critical — rather than drowning the user in filler.
 
-对应真实问题：用 Figma MCP 做设计时，Agent 明明读到了组件库，依然不用。PRD 写了 A，截图显示的是 B，Agent 选哪个取决于它自己的心情。
+This is the stress test for question restraint, and the upper-bound test for Step 1 diagnosis quality.
 
-### 测试输入（直接复制）
+### Test input (copy-paste)
 
 ```
-我有一个 B2B SaaS 产品需要重新设计用户管理模块。我附上了以下资料：
-
-1. 产品原型（Figma）：https://figma.com/file/xxx（假设链接，请按已有原型处理）
-2. 品牌手册：主色调为 #1A1A2E 深海蓝，次色调 #E94560 珊瑚红，字体为 PP Neue Montreal
-3. PRD 文档关键内容：
-   - 用户管理分为「超级管理员」「组织管理员」「普通成员」三个角色
-   - 超级管理员可以跨组织操作
-   - 主要设备：桌面端优先，不需要移动端适配
-4. 竞品截图参考：附上了 3 张 Linear、Notion、Vercel Dashboard 的截图
-5. 产品经理的口头需求（已录入文字）：
-   - 「要做得像 Apple 那样简洁，但所有信息要显示出来，一个都不能少」
-   - 「我们的用户都是非常忙的 IT 管理员，他们希望能一眼看到所有内容」
-   - 「界面需要支持多语言，后续要出海」
-   - 「移动端也要兼容，运维人员经常在手机上看」
-
-请帮我生成 Design Brief。
+Help me build an admin system.
 ```
 
-### 评分标准
+(No attachments, no Figma link, no background material whatsoever.)
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 没有识别任何矛盾 | 识别了 1 处矛盾 | 识别了 2-3 处矛盾 | 全部 3 处矛盾均被识别并标注 |
-| 追问克制性 | 追问了矛盾之外的其他内容 | 追问了矛盾，但问题不精准 | 针对矛盾追问，问题清晰 | 追问精准，只问裁决所需的最小信息 |
-| Brief 可用性 | Brief 直接把矛盾包进去 | Brief 注明了矛盾但没有解决 | Brief 提示了矛盾并给出选项 | Brief 要求用户在矛盾点做出明确决策后才生成 |
+### Scoring criteria
 
-### 预期陷阱
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | six dimensions not distinguished as KNOWN/VAGUE/MISSING | distinguished but clearly misjudged | basically accurate, 1–2 items off | all six dimensions accurate |
+| Question restraint | more than 5 questions | ≤ 5 but with filler (e.g. "what color do you want?") | ≤ 5, meaningful, reasonable order | ≤ 5, precise, each question meaningfully reduces uncertainty |
+| Brief usability | Brief unusable, full of guesses | structured but key info still missing | basically usable, minor additions needed | Brief can be handed straight to an agent |
 
-**材料中的三处矛盾，Brief Builder 必须全部识别：**
+### Expected traps
 
-1. **设备矛盾**：PRD 说「桌面端优先不需要移动端」，PM 说「移动端也要兼容」——这两条直接冲突，必须裁决
-2. **密度矛盾**：「像 Apple 那样简洁」vs「一个信息都不能少」——这是典型的互相矛盾的视觉优先级要求
-3. **竞品风格矛盾**：Linear/Vercel 是极简工程师风，PM 同时要求「所有信息都显示出来」——两者方向相反
+- **Over-questioning**: firing 8–10 questions in a row, collapsing the user experience
+- **Filler questions**: "do you want a dark or light theme?" "what font?" — meaningless before any goal-layer info exists
+- **Skipping diagnosis straight to a Brief**: with zero info, not asking and just emitting an assumption-filled Brief
 
-### 通过标准
+### Pass criteria
 
-- 诊断报告里明确标注 3 处矛盾（不是隐藏在 VAGUE 里，而是显式列出）
-- 不在矛盾未解决的情况下生成 Brief
-- 追问只针对这三处裁决，不额外追问无关内容
+- Question count ≤ 5
+- No color/font visual questions (these are secondary before the goal, audience, and core flow are clear)
+- The first question must be about "what core business problem does this system solve / who is it for"
 
 ---
 
-## TC-C · 目标缺失
+## TC-B · Conflicting inputs
 
-### 场景背景
+### Background
 
-考察：当用户给了很完整的原型和视觉参考，但完全没有说清楚「为什么做这个页面、这个设计要解决什么问题」时，Brief Builder 能否识别出目标层是空洞的，并问出真正有效的问题——而不是跳过目标层、直接进入视觉讨论。
+Focus: when the user provides a lot of material but the materials contradict each other, can Brief Builder identify the conflicts rather than blindly absorbing all input into the Brief — ultimately leaving the conflicts for the agent to resolve on its own.
 
-对应真实问题：「输出千人一面」的根因不是提示词写得不好，是目标层从来没有被建立。
+Corresponding real problem: when designing with the Figma MCP, the agent clearly read the component library yet still doesn't use it. The PRD says A, the screenshot shows B, and which one the agent picks depends on its mood.
 
-### 测试输入（直接复制）
+### Test input (copy-paste)
 
 ```
-我们公司的订单管理页面需要重新设计。
+I have a B2B SaaS product and need to redesign the user-management module. I've attached the following materials:
 
-参考资料：
-- 现有页面截图：[附上 3 张现有系统截图]
-- 竞品参考：参考 Shopify Admin、Linear 的整体风格
-- 技术约束：使用 Ant Design 组件库，React，桌面端
+1. Product prototype (Figma): https://figma.com/file/xxx (assume the link works; treat as an existing prototype)
+2. Brand book: primary color #1A1A2E deep-sea blue, secondary #E94560 coral red, font PP Neue Montreal
+3. Key PRD content:
+   - User management has three roles: "super admin", "org admin", "regular member"
+   - Super admins can operate across organizations
+   - Primary device: desktop-first, no mobile adaptation needed
+4. Competitor screenshot references: 3 screenshots of Linear, Notion, Vercel Dashboard
+5. The PM's verbal requirements (transcribed):
+   - "Make it as clean as Apple, but show all the information, not a single item missing"
+   - "Our users are very busy IT admins who want to see everything at a glance"
+   - "The interface needs multi-language support; we're going global later"
+   - "Mobile must be compatible too; ops people often check on their phones"
 
-需求：
-1. 参考竞品重新设计订单管理页面
-2. 整体风格要更现代
-3. 组件库用 Ant Design
-
-请生成 Design Brief 并开始执行。
+Please generate the Design Brief.
 ```
 
-（附上 3 张当前订单页面截图。）
+### Scoring criteria
 
-### 评分标准
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | no conflict identified | 1 conflict identified | 2–3 conflicts identified | all 3 conflicts identified and flagged |
+| Question restraint | asks about things other than the conflicts | asks about the conflicts but imprecisely | targets the conflicts, clear questions | precise, asking only the minimum info needed to rule |
+| Brief usability | Brief packs the conflicts in directly | Brief notes the conflicts but doesn't resolve them | Brief flags the conflicts and offers options | Brief requires the user to decide on each conflict before it is generated |
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 没有发现目标层缺失 | 发现了目标层缺失但描述模糊 | 明确标注 Goal = MISSING，列出具体缺什么 | 不仅识别缺失，还能说明目标层缺失对后续执行的影响 |
-| 追问克制性 | 没有追问目标层，直接进入视觉讨论 | 追问了目标层，但问题太宽泛 | 问了 1-2 个精准目标层问题 | 用 1 个问题覆盖目标层的核心，不多问 |
-| Brief 可用性 | 在没有目标层的情况下生成了 Brief | Brief 里目标层写的是猜测，未标注 | Brief 目标层留空，等待用户补充 | Brief 暂停生成，明确说明需要目标层信息才能继续 |
+### Expected traps
 
-### 预期陷阱
+**The three conflicts in the material that Brief Builder must all identify:**
 
-- **最常见失败**：看到截图和 Ant Design 约束就以为信息足够，直接生成 Brief，目标层写「重新设计订单管理页面」（这是任务描述，不是目标）
-- **目标层的正确问法**：不是「你想要什么风格」，而是「订单管理员在这个页面上最耗时的操作是什么」「现在这个页面最大的痛点是什么」
+1. **Device conflict**: PRD says "desktop-first, no mobile needed", PM says "mobile must be compatible too" — directly conflicting, must be ruled
+2. **Density conflict**: "as clean as Apple" vs "not a single item missing" — a classic mutually contradictory visual-priority requirement
+3. **Competitor-style conflict**: Linear/Vercel are minimalist engineer-style, while the PM also demands "show all information" — opposite directions
 
-### 通过标准
+### Pass criteria
 
-- 诊断报告里 Goal = MISSING，且说明了缺什么（用户类型、核心任务、成功标准）
-- 不在目标层空白时生成 Brief
-- 第一个追问必须是目标/痛点类，不是视觉类
+- The diagnosis report explicitly flags all 3 conflicts (not hidden under VAGUE, but listed explicitly)
+- Does not generate a Brief while the conflicts are unresolved
+- Follow-ups target only these three rulings, with no extra unrelated questions
 
 ---
 
-## TC-D · 约束冲突
+## TC-C · Missing goal
 
-### 场景背景
+### Background
 
-考察：当用户同时提出互相矛盾的设计要求时，Brief Builder 能否在约束层识别冲突，强制让用户做优先级选择——而不是把矛盾打包进 Brief，留给 Agent 在执行时随机裁决。
+Focus: when the user gives a complete prototype and visual references but never explains "why this page exists, what problem this design solves", can Brief Builder recognize that the goal layer is hollow and ask genuinely effective questions — rather than skipping the goal layer and jumping straight to visual discussion.
 
-对应真实问题：Agent 收到矛盾指令后，最容易的处理方式是「都尝试」或「随机选一个」，导致产出风格混乱、无法落地。
+Corresponding real problem: the root cause of "generic output" is not a poorly written prompt; it's that the goal layer was never established.
 
-### 测试输入（直接复制）
+### Test input (copy-paste)
 
 ```
-我需要设计一个 AI 写作助手的主界面。要求如下：
+Our company's order-management page needs a redesign.
 
-用户需求：
-- 面向创意写作用户（小说家、剧本作者、内容创作者）
-- 用户年龄分布广：18-55岁
-- 同时要吸引专业用户和完全没有写作经验的新手
+References:
+- Existing page screenshots: [3 screenshots of the current system]
+- Competitor reference: refer to the overall style of Shopify Admin, Linear
+- Technical constraints: use the Ant Design component library, React, desktop
 
-视觉风格要求：
-- 要极简，少即是多，白色和留白为主
-- 要有强烈的品牌个性，一看就记住，不能和任何竞品长得一样
-- 要专业，让用户信任我们是严肃的工具
-- 要有趣，让新手用户感到亲切不害怕
+Requirements:
+1. Redesign the order-management page referencing the competitors
+2. Make the overall style more modern
+3. Use Ant Design for components
 
-功能密度要求：
-- 首屏要把所有核心功能都展示出来，让用户立刻知道能做什么
-- 界面要干净，不要让用户感到信息过载
-
-设备：
-- 主要是桌面端
-- 但我们的数据显示 40% 的用户用平板，需要完美适配平板
-
-请生成 Design Brief 并开始设计。
+Please generate the Design Brief and start executing.
 ```
 
-### 评分标准
+(3 screenshots of the current order page attached.)
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 没有识别任何冲突 | 识别了 1 处冲突 | 识别了 2 处冲突 | 全部 3 处冲突均识别，说明每处冲突的具体矛盾点 |
-| 追问克制性 | 没有追问，直接生成 Brief | 追问了但没聚焦在冲突裁决上 | 针对冲突裁决追问，但问题顺序混乱 | 按优先级逐一追问每处冲突，每问清晰 |
-| Brief 可用性 | Brief 包含未解决的矛盾 | Brief 注明了矛盾 | Brief 要求用户裁决后才继续 | Brief 为每处冲突提供 2-3 个可选方向，帮助用户做决策 |
+### Scoring criteria
 
-### 预期陷阱
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | doesn't notice the missing goal layer | notices it but describes it vaguely | clearly labels Goal = MISSING, lists what's missing | identifies the gap and explains its impact on downstream execution |
+| Question restraint | no goal-layer question, jumps to visuals | asks about the goal layer but too broadly | asks 1–2 precise goal-layer questions | covers the goal-layer core in 1 question, no more |
+| Brief usability | generates a Brief with no goal layer | goal layer is a guess, unlabeled | leaves the goal layer blank, awaiting the user | pauses Brief generation, clearly stating it needs goal-layer info to continue |
 
-**材料中的三处约束冲突：**
+### Expected traps
 
-1. **密度冲突**：「首屏展示所有核心功能」vs「干净不过载」——这两个要求互斥，没有裁决就无法执行
-2. **风格冲突**：「极简白色」vs「强烈品牌个性一看就记住」vs「有趣亲切」——极简和强个性可以共存，但方向完全不同，需要定义哪个优先
-3. **受众冲突**：「专业严肃」vs「新手亲切不害怕」——面向同一界面同时服务两个心理预期相反的用户，需要策略决策（分层？渐进式？）
+- **Most common failure**: seeing the screenshots and the Ant Design constraint, assuming there's enough info and generating a Brief straight away, writing the goal layer as "redesign the order-management page" (a task description, not a goal)
+- **The right way to ask the goal layer**: not "what style do you want", but "what is the most time-consuming action for an order manager on this page" / "what is the biggest pain point on the current page"
 
-### 通过标准
+### Pass criteria
 
-- 三处冲突全部被识别，在诊断报告里显式列出
-- 不在冲突未裁决的情况下生成 Brief
-- 针对每处冲突，追问要给用户选项（不只是「您希望怎么做」，而是「A 方案 vs B 方案，您倾向哪个」）
+- The diagnosis report has Goal = MISSING, and explains what's missing (user type, core task, success criteria)
+- Does not generate a Brief while the goal layer is blank
+- The first follow-up must be goal/pain-point related, not visual
 
 ---
 
-## TC-E · B端复杂系统
+## TC-D · Conflicting constraints
 
-### 场景背景
+### Background
 
-考察：在 B 端企业级产品场景下，Brief Builder 能否主动识别 B 端特有的三类约束——「多角色状态差异」「操作顺序约束」「不可逆操作防误触」——并把它们完整写进 Constraint Layer。
+Focus: when the user puts forward mutually contradictory design requirements at the same time, can Brief Builder identify the conflicts at the constraint layer and force the user to make a priority choice — rather than packing the conflicts into the Brief for the agent to resolve at random during execution.
 
-对应真实问题：Agent 做 B 端设计最常见的失败是：只做了 happy path，空态/错误态/权限不足态全部缺失；不同角色看到的界面没有区分；不可逆操作没有确认机制。
+Corresponding real problem: when an agent receives contradictory instructions, the easiest handling is to "try both" or "pick one at random", producing a chaotic, unshippable result.
 
-### 测试输入（直接复制）
+### Test input (copy-paste)
 
 ```
-我们有一个企业采购审批系统需要设计，这是一个内部 OA 工具。
+I need to design the main interface of an AI writing assistant. Requirements:
 
-系统概述：
-- 员工提交采购申请 → 部门主管审批 → 财务审核 → CFO 最终批准
-- 单次采购金额可以从几百元到几百万元不等
-- 每天大概有 20-50 个申请在流转
+User needs:
+- For creative-writing users (novelists, screenwriters, content creators)
+- Wide age range: 18–55
+- Must appeal to both professionals and complete beginners with no writing experience
 
-用户角色：
-- 普通员工（提交申请，查看状态）
-- 部门主管（审批下属申请，可以驳回）
-- 财务专员（金额核实，合规检查）
-- CFO（最终审批，可以一键批量通过）
+Visual style requirements:
+- Minimal, less is more, mostly white and whitespace
+- Strong brand personality, memorable at a glance, unlike any competitor
+- Professional, so users trust we're a serious tool
+- Fun, so beginners feel friendly and unintimidated
 
-页面需求：
-- 申请提交页面
-- 审批列表页面（各角色看到的不同）
-- 申请详情 + 审批操作页面
-- 审批历史记录
+Feature-density requirements:
+- The above-the-fold area must show all core features so users immediately know what they can do
+- The interface must be clean, no information overload
 
-请帮我做 Design Brief 然后开始设计。
+Device:
+- Mainly desktop
+- But our data shows 40% of users are on tablets; perfect tablet adaptation needed
+
+Please generate the Design Brief and start designing.
 ```
 
-（无附件，无品牌文档。）
+### Scoring criteria
 
-### 评分标准
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | no conflict identified | 1 conflict identified | 2 conflicts identified | all 3 conflicts identified, each with its specific contradiction explained |
+| Question restraint | no follow-up, generates a Brief directly | asks but not focused on conflict rulings | targets conflict rulings but in a messy order | asks about each conflict by priority, each question clear |
+| Brief usability | Brief contains unresolved conflicts | Brief notes the conflicts | Brief requires a ruling before continuing | Brief offers 2–3 options per conflict to help the user decide |
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 没有识别任何 B 端特有约束 | 识别了 1 类 B 端约束 | 识别了 2 类 B 端约束 | 三类 B 端约束全部识别：多角色差异 + 操作顺序 + 不可逆防误触 |
-| 追问克制性 | 没有追问关键缺失项，或追问超过 5 个 | 追问了但遗漏了 B 端关键信息 | 追问覆盖了 B 端核心，≤5 问 | 追问精准聚焦 B 端特有需求，每问有明确目的 |
-| Brief 可用性 | Brief 里没有角色状态差异、操作顺序、防误触 | Brief 提到了角色差异但不完整 | Brief 覆盖了 B 端三类约束，基本可用 | Brief 的 Constraint Layer 完整包含：角色权限矩阵 + 操作顺序规则 + 不可逆操作清单 |
+### Expected traps
 
-### 关键检查项
+**The three constraint conflicts in the material:**
 
-Brief 的 Constraint Layer 里必须出现以下内容才算通过：
+1. **Density conflict**: "show all core features above the fold" vs "clean, no overload" — mutually exclusive, unexecutable without a ruling
+2. **Style conflict**: "minimal white" vs "strong brand personality, memorable at a glance" vs "fun and friendly" — minimal and strong-personality can coexist, but the directions differ completely; which takes priority must be defined
+3. **Audience conflict**: "professional and serious" vs "beginner-friendly, unintimidating" — serving two psychologically opposite users on the same interface needs a strategic decision (tiering? progressive disclosure?)
 
-**多角色状态差异**
-- 审批列表对不同角色显示不同内容（员工只看自己的，主管看下属的，CFO 看所有）
-- 操作按钮按角色显示（员工看不到「驳回」按钮）
+### Pass criteria
 
-**操作顺序约束**
-- 必须按「主管 → 财务 → CFO」顺序，不能跳步
-- 财务未核实前，CFO 审批按钮需要禁用并说明原因
-
-**不可逆操作防误触**
-- 「批量通过」是高风险操作，需要二次确认
-- 「驳回」操作需要强制填写驳回理由，不能空提交
-- 大金额申请（如 >10万）需要特殊标注，防止 CFO 批量通过时忽略
-
-### 预期陷阱
-
-- 最常见失败：Brief 写了四个页面，但都是 happy path，没有 B 端约束
-- 另一类失败：识别了角色差异，但没有识别操作顺序约束（这是最容易漏掉的）
-
-### 通过标准
-
-- Constraint Layer 里出现角色权限差异的具体描述
-- Constraint Layer 里出现操作顺序规则
-- Constraint Layer 里出现至少一条不可逆操作的防误触要求
+- All three conflicts identified, listed explicitly in the diagnosis report
+- Does not generate a Brief while conflicts are unresolved
+- For each conflict, the follow-up gives the user options (not just "how do you want it", but "option A vs option B, which do you prefer")
 
 ---
 
-## TC-F · 增量迭代
+## TC-E · Complex B2B system
 
-### 场景背景
+### Background
 
-考察：当用户有一个已经上线的系统、只想改局部时，Brief Builder 能否清晰界定「改什么/不动什么」，防止 Agent 把整个系统推倒重来——或者在多轮执行中悄悄修改已通过的页面。
+Focus: in an enterprise-grade B2B product scenario, can Brief Builder proactively identify the three B2B-specific constraint classes — "multi-role state differences", "operation-order constraints", "irreversible-action misclick prevention" — and write them fully into the Constraint Layer.
 
-对应真实问题：多轮漂移。Agent 在执行第 3 个页面时，悄悄调整了第 1 个页面的间距和颜色，导致整体风格不一致，且用户很难发现是什么时候改掉的。
+Corresponding real problem: the most common failure when an agent designs B2B is doing only the happy path; empty/error/insufficient-permission states are all missing; different roles see no differentiation; irreversible actions have no confirmation mechanism.
 
-### 测试输入（直接复制）
+### Test input (copy-paste)
 
 ```
-我们的 SaaS 产品已经上线运行了 18 个月，整体设计是 Ant Design 风格。
-现在只有搜索和筛选模块的体验很差，用户反馈找不到想要的内容。
+We have an enterprise procurement-approval system to design; it's an internal OA tool.
 
-现有系统情况：
-- 已上线页面：首页 Dashboard、用户列表、订单列表、报表页面、设置页面（共 5 个主模块）
-- 设计系统：Ant Design，有一套内部定制主题（主色 #2B5CE6，圆角 6px，字体 PingFang SC）
-- 现有搜索体验（需要改的）：
-  - 搜索框在顶部右侧，位置不明显
-  - 筛选条件分散在页面各处，没有统一的筛选面板
-  - 搜索结果没有高亮，不知道匹配了哪里
-  - 没有搜索历史
+System overview:
+- Employee submits a procurement request → department manager approves → finance reviews → CFO final approval
+- A single procurement amount can range from a few hundred to a few million
+- About 20–50 requests flow through per day
 
-需要设计的内容：
-- 全局搜索入口（所有页面共用）
-- 统一筛选面板组件
-- 搜索结果页面
+User roles:
+- Regular employee (submits requests, views status)
+- Department manager (approves subordinates' requests, can reject)
+- Finance specialist (amount verification, compliance check)
+- CFO (final approval, can bulk-approve in one click)
 
-其他所有页面不需要改动，保持现有设计。
+Page requirements:
+- Request submission page
+- Approval list page (different per role)
+- Request detail + approval action page
+- Approval history log
 
-请生成 Design Brief。
+Please make the Design Brief and start designing.
 ```
 
-### 评分标准
+(No attachments, no brand documents.)
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 没有识别「局部改造」的边界约束 | 识别了边界但描述模糊 | 明确区分「改」和「不改」的范围 | 完整识别边界 + 说明局部改造对整体的一致性要求 |
-| 追问克制性 | 追问了大量已有信息之外的内容 | 追问聚焦但有冗余 | 追问精准，≤3 问 | 只追问真正缺失的内容（如搜索触发方式），不问已知的 |
-| Brief 可用性 | Brief 包含对现有页面的改动计划 | Brief 说了「不动其他页面」但没有约束条文 | Brief 的 Forbidden Items 里明确禁止修改现有页面 | Brief 的 Constraint Layer 包含完整的「只改范围」界定 + 与现有设计系统的衔接规则 |
+### Scoring criteria
 
-### 关键检查项
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | no B2B-specific constraint identified | 1 class identified | 2 classes identified | all 3 B2B classes identified: multi-role differences + operation order + irreversible-action misclick prevention |
+| Question restraint | doesn't ask about key gaps, or asks more than 5 | asks but misses key B2B info | covers the B2B core, ≤ 5 | precisely focused on B2B-specific needs, each question with a clear purpose |
+| Brief usability | Brief has no role-state differences, operation order, or misclick prevention | mentions role differences but incompletely | covers the three B2B classes, basically usable | Constraint Layer fully includes: role-permission matrix + operation-order rules + irreversible-action list |
 
-Brief 必须出现以下约束才算通过：
+### Key checks
 
-**边界界定**
-- Page list 只包含「全局搜索入口」「筛选面板」「搜索结果页」三项
-- Forbidden Items 里明确写：不得修改 Dashboard、用户列表、订单列表、报表页面、设置页面的任何现有元素
+The Brief's Constraint Layer must contain the following to pass:
 
-**设计系统衔接**
-- 新组件必须继承现有主题：#2B5CE6、圆角 6px、PingFang SC
-- 不得引入新的字体、新的主色调
-- 新筛选面板的视觉语言必须与现有 Ant Design 组件保持一致
+**Multi-role state differences**
+- The approval list shows different content per role (employees see only their own, managers see subordinates', CFO sees all)
+- Action buttons shown per role (employees don't see the "reject" button)
 
-**Checkpoint 策略**
-- 第一个 Checkpoint 必须在全局搜索入口完成后，确认「嵌入现有导航后的视觉一致性」——这是影响后续所有页面的范式锁定点
+**Operation-order constraints**
+- Must follow "manager → finance → CFO", no skipping
+- Before finance verifies, the CFO approval button must be disabled with a reason
 
-### 预期陷阱
+**Irreversible-action misclick prevention**
+- "Bulk approve" is high-risk and needs a second confirmation
+- "Reject" must force entering a rejection reason, no empty submission
+- Large-amount requests (e.g. > 100k) need special flagging so the CFO doesn't overlook them during bulk approval
 
-- **最常见失败**：Brief 里写了 8 个页面（把其他 5 个现有页面也列进去了）
-- **第二常见失败**：Constraint Layer 里没有「禁止修改范围」的约束条文，只有隐含的理解
-- **执行阶段的漂移**：Agent 在做搜索结果页时，觉得间距和现有系统不统一，顺手改了 Dashboard 的导航栏
+### Expected traps
 
-### 通过标准
+- Most common failure: the Brief lists four pages, but all happy path, no B2B constraints
+- Another failure: identifies role differences but not operation-order constraints (the easiest to miss)
 
-- Page list 只有 3 项，不包含其他现有页面
-- Forbidden Items 里有明确的禁止修改范围
-- Constraint Layer 里有具体的设计系统衔接规则（不是「保持一致」这种空话）
+### Pass criteria
+
+- Specific role-permission differences appear in the Constraint Layer
+- Operation-order rules appear in the Constraint Layer
+- At least one irreversible-action misclick-prevention requirement appears in the Constraint Layer
+
+---
+
+## TC-F · Incremental iteration
+
+### Background
+
+Focus: when the user has a live system and only wants to change part of it, can Brief Builder clearly define "what to change / what to leave alone", preventing the agent from rebuilding the whole system — or quietly modifying already-approved pages across multiple rounds.
+
+Corresponding real problem: multi-round drift. While executing the 3rd page, the agent quietly adjusts the spacing and color of the 1st page, making the overall style inconsistent, and it's hard for the user to spot when it changed.
+
+### Test input (copy-paste)
+
+```
+Our SaaS product has been live for 18 months; the overall design is Ant Design style.
+Only the search and filter modules have a bad experience now; users report they can't find what they want.
+
+Current system:
+- Live pages: Dashboard, user list, order list, reports page, settings page (5 main modules)
+- Design system: Ant Design, with an internal custom theme (primary #2B5CE6, radius 6px, font PingFang SC)
+- Current search experience (to be changed):
+  - The search box is at the top right, not prominent
+  - Filter conditions are scattered around the page, no unified filter panel
+  - Search results aren't highlighted; you can't tell what matched
+  - No search history
+
+What needs designing:
+- Global search entry (shared across all pages)
+- Unified filter panel component
+- Search results page
+
+All other pages need no changes; keep the existing design.
+
+Please generate the Design Brief.
+```
+
+### Scoring criteria
+
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | doesn't identify the "partial change" boundary constraint | identifies the boundary but vaguely | clearly distinguishes "change" vs "don't change" scope | fully identifies the boundary + states the consistency requirement of a partial change on the whole |
+| Question restraint | asks about a lot beyond the given info | focused but with redundancy | precise, ≤ 3 | asks only what's genuinely missing (e.g. search trigger), not the known |
+| Brief usability | Brief includes change plans for existing pages | Brief says "don't touch other pages" but has no constraint clause | Brief's Forbidden Items explicitly forbid modifying existing pages | Brief's Constraint Layer contains a complete "change-scope only" definition + integration rules with the existing design system |
+
+### Key checks
+
+The Brief must contain the following constraints to pass:
+
+**Boundary definition**
+- Page list contains only "global search entry", "filter panel", "search results page"
+- Forbidden Items explicitly state: must not modify any existing element of Dashboard, user list, order list, reports page, settings page
+
+**Design-system integration**
+- New components must inherit the existing theme: #2B5CE6, radius 6px, PingFang SC
+- Must not introduce a new font or new primary color
+- The new filter panel's visual language must stay consistent with the existing Ant Design components
+
+**Checkpoint strategy**
+- The first Checkpoint must come after the global search entry is done, confirming "visual consistency after embedding into the existing nav" — the paradigm-locking point that affects all subsequent pages
+
+### Expected traps
+
+- **Most common failure**: the Brief lists 8 pages (including the other 5 existing pages)
+- **Second most common**: the Constraint Layer has no "prohibited modification scope" clause, only an implied understanding
+- **Drift during execution**: while doing the search results page, the agent feels the spacing is inconsistent with the existing system and casually changes the Dashboard's nav bar
+
+### Pass criteria
+
+- The page list has only 3 items, not the other existing pages
+- Forbidden Items have an explicit prohibited-modification scope
+- The Constraint Layer has concrete design-system integration rules (not empty words like "stay consistent")
 
 ---
 
 ## TC-G · DBB × DESIGN.md
 
-### 场景背景
+### Background
 
-考察：当项目根目录已有 DESIGN.md 时，DBB 生成的执行文件（CLAUDE.md / AGENTS.md / .cursorrules）能否正确引用它——而不是把 Token 重新手动写一遍，或者完全忽略它的存在。
+Focus: when the project root already has a DESIGN.md, can DBB's generated execution files (CLAUDE.md / AGENTS.md / .cursorrules) correctly reference it — rather than re-writing the tokens by hand or ignoring its existence entirely.
 
-DESIGN.md 是 Google Stitch 开源的设计系统规范格式，放在项目根目录后，所有支持它的 Agent（Claude Code、Cursor、Kiro 等）会自动读取。DBB 的执行文件应该用 `@DESIGN.md` 引用它，而不是重复搬运内容。
+DESIGN.md is the open-source design-system spec format from Google Stitch; once placed in the project root, all agents that support it (Claude Code, Cursor, Kiro, etc.) read it automatically. DBB's execution files should reference it via `@DESIGN.md`, not re-transcribe its content.
 
-对应真实问题：Token 值被手动写进执行文件，和 DESIGN.md 不同步，后续修改设计系统时两处都要改；或者执行文件里完全没提 DESIGN.md，Agent 执行时视觉层全靠猜。
+Corresponding real problem: token values get hand-written into the execution files, out of sync with DESIGN.md, so later design-system changes require edits in two places; or the execution files don't mention DESIGN.md at all and the agent guesses the visuals at execution time.
 
-### 测试输入（直接复制）
+### Test input (copy-paste)
 
 ```
-我们有一个数据看板产品需要新增「团队协作」模块，包含：
-- 成员管理页面（邀请、移除、角色设置）
-- 权限配置页面
-- 操作日志页面
+We have a data-dashboard product that needs a new "team collaboration" module, including:
+- Member-management page (invite, remove, role settings)
+- Permission-config page
+- Activity-log page
 
-项目根目录已有 DESIGN.md，包含完整的 Token 和组件规范。
-用户是团队管理员，桌面端，操作频率中等。
+The project root already has a DESIGN.md with complete tokens and component specs.
+Users are team admins, desktop, medium-frequency usage.
 
-请生成 Design Brief 并初始化执行文件。
+Please generate the Design Brief and initialize the execution files.
 ```
 
-（无附件，明确告知项目已有 DESIGN.md。）
+(No attachments; explicitly told the project already has a DESIGN.md.)
 
-### 评分标准
+### Scoring criteria
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 没有识别「已有 DESIGN.md」这一约束 | 识别了但未在 Constraint Layer 标注 | 在 Constraint Layer 标注了「项目有设计系统」 | 明确标注 DESIGN.md 存在，并说明执行文件应引用而非复写 |
-| 追问克制性 | 追问了 Token 细节（颜色/字体等） | 没追问 Token，但追问了其他视觉类问题 | 追问聚焦业务层，未涉及视觉层 | 完全不问视觉类问题，明确说明「视觉规范已有 DESIGN.md 覆盖」 |
-| Brief 可用性 | 执行文件里手动写入了 Token 值，未引用 DESIGN.md | 执行文件里提到了 DESIGN.md 但没有引用语法 | 执行文件里有 `@DESIGN.md` 引用，但位置不对 | 执行文件里在正确位置用 `@DESIGN.md` 引用，且说明「视觉约束以该文件为准，不重复写入」 |
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | doesn't identify the "existing DESIGN.md" constraint | identifies it but doesn't flag it in the Constraint Layer | flags "the project has a design system" in the Constraint Layer | explicitly flags DESIGN.md's existence and states the execution files should reference rather than re-write it |
+| Question restraint | asks about token details (color/font, etc.) | doesn't ask about tokens but asks other visual questions | focused on the business layer, no visual layer | asks no visual questions at all, explicitly stating "the visual spec is covered by DESIGN.md" |
+| Brief usability | execution files hand-write token values, no DESIGN.md reference | execution files mention DESIGN.md but with no reference syntax | execution files have an `@DESIGN.md` reference but in the wrong place | execution files reference `@DESIGN.md` in the right place and state "visual constraints defer to that file, not re-written" |
 
-### 预期陷阱
+### Expected traps
 
-- **最常见失败**：无视「项目已有 DESIGN.md」这句话，继续追问「主色是什么」「用什么字体」——这正是 DESIGN.md 要解决的问题
-- **第二常见失败**：Brief 里提到了设计系统，但执行文件里没有 `@DESIGN.md` 引用，导致 Agent 执行时仍然猜颜色
-- **第三类失败**：把 DESIGN.md 的内容摘抄进执行文件——重复写入，之后设计系统更新时两处不同步
+- **Most common failure**: ignoring "the project already has a DESIGN.md" and continuing to ask "what's the primary color" / "what font" — exactly what DESIGN.md is meant to solve
+- **Second most common**: the Brief mentions the design system, but the execution files have no `@DESIGN.md` reference, so the agent still guesses colors at execution time
+- **Third class of failure**: transcribing DESIGN.md's content into the execution files — duplicate writing, out of sync when the design system updates later
 
-### 通过标准
+### Pass criteria
 
-- 追问中不出现任何颜色、字体、间距类问题
-- 执行文件里出现 `@DESIGN.md` 或等效引用语法
-- Constraint Layer 里明确写：「视觉规范以项目根目录 DESIGN.md 为准」
+- No color, font, or spacing questions appear in the follow-ups
+- An `@DESIGN.md` or equivalent reference syntax appears in the execution files
+- The Constraint Layer explicitly states "the visual spec defers to the project-root DESIGN.md"
 
 ---
 
-## TC-H · 中途改需求
+## TC-H · Mid-flight requirement change
 
-### 场景背景
+### Background
 
-考察：Brief 已经走完 Step 1-3、执行文件已生成、用户回复了「start execution」之后，用户在执行过程中突然提出新功能需求——DBB 能否正确识别这是一次「Brief 外变更」，拒绝直接吸收，并引导用户走正确的变更流程，而不是悄悄把新需求塞进当前执行。
+Focus: after the Brief has gone through Steps 1–3, the execution files are generated, and the user has replied "start execution" — the user suddenly proposes a new feature requirement during execution. Can DBB correctly recognize this as an "out-of-Brief change", refuse to absorb it directly, and guide the user through the correct change process, rather than quietly stuffing the new requirement into the current execution.
 
-对应真实问题：需求在执行中途扩大是最常见的项目失控原因。Agent 如果直接接受新需求，会在没有约束的情况下自由发挥，破坏已审核的设计决策，导致风格漂移。
+Corresponding real problem: scope expansion mid-execution is the most common cause of project loss of control. If the agent accepts the new requirement directly, it improvises without constraints, breaking already-reviewed design decisions and causing style drift.
 
-### 测试输入
+### Test input
 
-这是一个**两阶段输入**，需要按顺序执行：
+This is a **two-stage input**, executed in order:
 
-**阶段一：正常完成 Brief 流程（直接复制）**
-
-```
-我需要设计一个内容创作工具的发布管理模块。
-
-包含：
-- 草稿列表页（支持筛选状态：草稿 / 待审核 / 已发布）
-- 文章详情 + 编辑页
-- 发布设置页（定时发布、渠道选择）
-
-用户是内容运营团队，桌面端，每天使用 2-3 次。
-技术约束：使用现有 Ant Design 组件库，主色 #1677FF。
-
-请生成 Design Brief。
-```
-
-完成 Step 1-3，生成执行文件，等用户回复「start execution」后开始执行。
-
-**阶段二：执行中途注入新需求（在 Agent 执行第一个页面后输入）**
+**Stage one: complete the Brief flow normally (copy-paste)**
 
 ```
-等一下，我刚想到还需要加一个「内容日历」视图，用日历形式展示所有计划发布的内容。这个加进去一起做吧。
+I need to design the publishing-management module of a content-creation tool.
+
+Includes:
+- Draft list page (supports filtering by status: draft / pending review / published)
+- Article detail + edit page
+- Publish settings page (scheduled publishing, channel selection)
+
+Users are the content-ops team, desktop, used 2–3 times per day.
+Technical constraints: use the existing Ant Design component library, primary #1677FF.
+
+Please generate the Design Brief.
 ```
 
-### 评分标准
+Complete Steps 1–3, generate the execution files, and start executing after the user replies "start execution".
 
-| 维度 | 0分 | 1分 | 2分 | 3分 |
-|------|-----|-----|-----|-----|
-| 诊断准确性 | 直接接受新需求，开始设计日历视图 | 接受了需求但提示「这是新内容」 | 拒绝直接执行，说明这是 Brief 外变更 | 拒绝执行 + 说明影响范围 + 给出两条明确路径 |
-| 追问克制性 | 立即追问日历视图的设计细节 | 没追问设计细节，但没有拒绝需求 | 拒绝后只提供一条处理路径 | 拒绝后给出完整选项：① 暂停当前执行重新走 Brief ② 当前完成后作为下一轮 Brief |
-| Brief 可用性 | 执行文件被直接修改，加入了日历视图 | 执行文件未修改，但继续执行了 | 执行暂停，等待用户决策 | 执行暂停 + 执行文件保持原样 + 给出清晰的下一步指引 |
+**Stage two: inject a new requirement mid-execution (input after the agent finishes the first page)**
 
-### 预期陷阱
+```
+Wait, I just thought of it — we also need a "content calendar" view that shows all scheduled content in calendar form. Let's add it in together.
+```
 
-- **最常见失败**：直接说「好的，我来设计内容日历」，把新需求无缝接入当前执行——Brief 锁定形同虚设
-- **第二常见失败**：提示了「这是新内容」，但仍然继续执行，并在当前执行文件里追加了日历视图的页面
-- **隐性失败**：拒绝了需求，但给的路径太模糊（「你可以之后再做」），没有具体的操作指引
+### Scoring criteria
 
-### 通过标准
+| Dimension | 0 pts | 1 pt | 2 pts | 3 pts |
+|-----------|-------|------|-------|-------|
+| Diagnostic accuracy | accepts the new requirement directly, starts designing the calendar view | accepts it but notes "this is new" | refuses direct execution, states this is an out-of-Brief change | refuses execution + states the impact scope + offers two clear paths |
+| Question restraint | immediately asks for the calendar view's design details | doesn't ask for details, but doesn't refuse either | refuses then offers only one handling path | refuses then gives complete options: ① pause current execution and re-run the Brief ② do it as the next round's Brief after the current one finishes |
+| Brief usability | execution files modified directly, calendar view added | execution files unchanged, but execution continued | execution paused, awaiting the user's decision | execution paused + execution files kept intact + clear next-step guidance given |
 
-- 明确拒绝在当前执行中直接吸收新需求
-- 执行文件在用户决策前保持不变
-- 给出两条可操作的路径，让用户自己选择
+### Expected traps
+
+- **Most common failure**: saying "sure, I'll design the content calendar" and seamlessly merging the new requirement into the current execution — the Brief lock becomes meaningless
+- **Second most common**: noting "this is new" but still continuing execution and appending the calendar-view page to the current execution file
+- **Hidden failure**: refusing the requirement but giving a path too vague ("you can do it later"), with no concrete operational guidance
+
+### Pass criteria
+
+- Explicitly refuses to absorb the new requirement directly into the current execution
+- The execution files stay unchanged until the user decides
+- Offers two actionable paths for the user to choose
 
 ---
 
-## 横向评分对比表
+## Cross-agent scoring table
 
-测试完成后，按以下维度填写：
+Fill in after testing, by dimension:
 
-| 用例 | Agent | 诊断准确性 /3 | 追问克制性 /3 | Brief 可用性 /3 | 总分 /9 | 主要失败点 |
-|------|-------|-------------|-------------|----------------|---------|-----------|
-| TC-A 极简输入 | Claude Code | | | | | |
-| TC-A 极简输入 | Cursor | | | | | |
-| TC-A 极简输入 | Codex | | | | | |
-| TC-B 材料冲突 | Claude Code | | | | | |
-| TC-B 材料冲突 | Cursor | | | | | |
-| TC-B 材料冲突 | Codex | | | | | |
-| TC-C 目标缺失 | Claude Code | | | | | |
-| TC-C 目标缺失 | Cursor | | | | | |
-| TC-C 目标缺失 | Codex | | | | | |
-| TC-D 约束冲突 | Claude Code | | | | | |
-| TC-D 约束冲突 | Cursor | | | | | |
-| TC-D 约束冲突 | Codex | | | | | |
-| TC-E B端复杂 | Claude Code | | | | | |
-| TC-E B端复杂 | Cursor | | | | | |
-| TC-E B端复杂 | Codex | | | | | |
-| TC-F 增量迭代 | Claude Code | | | | | |
-| TC-F 增量迭代 | Cursor | | | | | |
-| TC-F 增量迭代 | Codex | | | | | |
-| TC-G DBB×DESIGN.md | Claude Code | | | | | |
-| TC-G DBB×DESIGN.md | Cursor | | | | | |
-| TC-G DBB×DESIGN.md | Codex | | | | | |
-| TC-H 中途改需求 | Claude Code | | | | | |
-| TC-H 中途改需求 | Cursor | | | | | |
-| TC-H 中途改需求 | Codex | | | | | |
-
----
-
-## 测试顺序建议
-
-**第一轮（单 Agent，跑完所有用例）**
-先选 Claude Code 跑全部 8 个用例，记录每个用例的失败点。这一轮的目标不是对比，是找到 Brief Builder 提示词本身的漏洞。
-
-**第二轮（单用例，跨 Agent 对比）**
-选评分差异最大的 1-2 个用例，在三个 Agent 上对比表现。
-
-**优先跑的用例**：TC-B（材料冲突）和 TC-E（B端复杂）——这两个覆盖了实际工作中最高频的失败场景。
-
-**特殊说明**：TC-H 需要两阶段输入，建议单独安排，不和其他用例连续跑，避免上下文污染。
+| Case | Agent | Diagnostic accuracy /3 | Question restraint /3 | Brief usability /3 | Total /9 | Main failure point |
+|------|-------|------------------------|-----------------------|--------------------|----------|--------------------|
+| TC-A Minimal input | Claude Code | | | | | |
+| TC-A Minimal input | Cursor | | | | | |
+| TC-A Minimal input | Codex | | | | | |
+| TC-B Conflicting inputs | Claude Code | | | | | |
+| TC-B Conflicting inputs | Cursor | | | | | |
+| TC-B Conflicting inputs | Codex | | | | | |
+| TC-C Missing goal | Claude Code | | | | | |
+| TC-C Missing goal | Cursor | | | | | |
+| TC-C Missing goal | Codex | | | | | |
+| TC-D Conflicting constraints | Claude Code | | | | | |
+| TC-D Conflicting constraints | Cursor | | | | | |
+| TC-D Conflicting constraints | Codex | | | | | |
+| TC-E Complex B2B | Claude Code | | | | | |
+| TC-E Complex B2B | Cursor | | | | | |
+| TC-E Complex B2B | Codex | | | | | |
+| TC-F Incremental iteration | Claude Code | | | | | |
+| TC-F Incremental iteration | Cursor | | | | | |
+| TC-F Incremental iteration | Codex | | | | | |
+| TC-G DBB × DESIGN.md | Claude Code | | | | | |
+| TC-G DBB × DESIGN.md | Cursor | | | | | |
+| TC-G DBB × DESIGN.md | Codex | | | | | |
+| TC-H Mid-flight change | Claude Code | | | | | |
+| TC-H Mid-flight change | Cursor | | | | | |
+| TC-H Mid-flight change | Codex | | | | | |
 
 ---
 
-Marker Utron Studio · Brief Builder 测试用例集 · 2026-06-01
+## Suggested test order
+
+**Round 1 (single agent, run all cases)**
+Pick Claude Code first and run all 8 cases, recording each case's failure point. The goal of this round is not comparison but finding the holes in the Brief Builder prompt itself.
+
+**Round 2 (single case, cross-agent comparison)**
+Pick the 1–2 cases with the largest score variance and compare across the three agents.
+
+**Cases to prioritize**: TC-B (conflicting inputs) and TC-E (complex B2B) — these two cover the highest-frequency failure scenarios in real work.
+
+**Special note**: TC-H needs a two-stage input; schedule it separately rather than running it back-to-back with other cases, to avoid context contamination.
+
+---
+
+Marker Utron Studio · Brief Builder Test Case Set · 2026-06-01
