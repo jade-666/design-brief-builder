@@ -1,14 +1,11 @@
 ---
 name: design-brief-builder
 description: >
-  Structured design brief generation and Agent execution control for UI/UX projects.
-  Use this skill whenever a user starts a design task with an AI Agent (Claude Code,
-  Cursor, Codex, Figma AI) — especially when the request is vague, involves prototype
-  redesign, visual auditing, or brand consistency work. Trigger on phrases like "redesign
-  this", "audit the UI", "fix the layout", "help me brief this project", "set up my
-  design constraints", or any design task where the user attaches prototype images, Figma
-  links, or brand documents. Do NOT skip this skill for design tasks — vague inputs
-  produce unusable outputs. This skill prevents that.
+  Generates structured design briefs and execution constraints for UI/UX projects.
+  Use at the start of a design task — especially vague requests, prototype redesigns,
+  UI audits, or brand-consistency work, or when the user attaches prototype images,
+  Figma links, or brand documents. Trigger on phrases like "redesign this", "audit
+  the UI", "fix the layout", or "help me brief this project".
 ---
 
 # Design Brief Builder
