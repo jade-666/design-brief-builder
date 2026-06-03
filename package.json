@@ -1,6 +1,6 @@
 {
   "name": "design-brief-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A pre-execution governance layer for AI-assisted design. Turns design requests into structured constraint files before an AI agent (Claude Code, Cursor, Codex, and beyond) starts working.",
   "bin": {
     "design-brief-builder": "bin/install.js"
